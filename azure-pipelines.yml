@@ -4,7 +4,7 @@ trigger:
     - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: AzureDevops
 
 steps:
 - task: NodeTool@0
@@ -14,13 +14,31 @@ steps:
 
 - script: |
     npm install
+    npm install --save-dev mocha
+    npm install --save-dev chai
     npm run test
   displayName: 'npm install and test'
 
 - task: Docker@2
   inputs:
-    containerRegistry: 'Docker Hub'
-    repository: 'mon-projet'
+    containerRegistry: 'dockerHub'
+    repository: 'itsyoussefjabri/azure-devops'
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
     tags: '$(Build.BuildId)'
+
+- script: |
+    npm i -g vercel
+  displayName: 'Install Vercel CLI'
+
+- script: |
+    echo $(vercelToken) | vercel login
+  env:
+    vercelToken: $(vercelToken)
+  displayName: 'Login to Vercel'
+
+- script: |
+    vercel --token $(vercelToken) --prod
+  env:
+    vercelToken: $(vercelToken)
+  displayName: 'Deploy to Vercel'
